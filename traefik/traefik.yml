@@ -1,0 +1,27 @@
+log:
+  level: WARN
+accessLog: false
+api:
+  dashboard: false
+  insecure: false
+providers:
+  file:
+    filename: /etc/traefik/file.yml
+  docker:
+    exposedByDefault: false
+entryPoints:
+  web:
+    address: ":80"
+    forwardedHeaders:
+      trustedIPs:
+        - "172.16.0.0/12"
+# tlsChallenge and dnsChallenge are to be set via runtime command flags, not in static config
+
+
+
+tls:
+  stores:
+    default:
+      defaultCertificate:
+        certFile: /config/certificates/main.pem
+        keyFile: /config/certificates/main-key.pem
