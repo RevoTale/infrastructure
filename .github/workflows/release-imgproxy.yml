@@ -1,0 +1,31 @@
+#
+name: Create and publish a Docker image
+
+on:
+  release:
+    types: [published]
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_NAME: ${{ github.repository }}-imgproxy
+
+jobs:
+  build-and-push-image:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+      attestations: write
+      id-token: write
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v6
+      - name: Build and push Docker image (multi-arch)
+        uses: RevoTale/docker-multi-arch-release-action@v1.1.0
+        with:
+          registry: ${{ env.REGISTRY }}
+          platforms: linux/amd64,linux/arm64
+          username: ${{ github.actor }}
+          image-name: ${{ env.IMAGE_NAME }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+          context: ./imgproxy
