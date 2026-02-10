@@ -23,7 +23,7 @@ endpoints:
       - "[BODY] != \"\""
   - name: CMS
     group: core
-    url: https://cms.${PROJECT_DOMAIN}/admin
+    url: https://${PROJECT_DOMAIN}/admin
     interval: 1m
     conditions:
       - "[STATUS] == 200"
@@ -51,7 +51,7 @@ endpoints:
       - "[BODY] != \"\""
   - name: Admin Login
     group: services
-    url: https://cms.${PROJECT_DOMAIN}/admin/login
+    url: https://${PROJECT_DOMAIN}/admin/login
     interval: 5m
     conditions:
       - "[STATUS] == 200"
