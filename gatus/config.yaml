@@ -1,0 +1,65 @@
+web:
+  port: 8080
+ui:
+  title: "Status"
+  default-sort-by: group
+storage:
+  type: sqlite
+  path: /data/gatus.db
+endpoints:
+  - name: Root
+    group: core
+    url: https://${PROJECT_DOMAIN}
+    interval: 1m
+    conditions:
+      - "[STATUS] == 200"
+      - "[BODY] != \"\""
+  - name: Notes
+    group: core
+    url: https://notes.${PROJECT_DOMAIN}
+    interval: 1m
+    conditions:
+      - "[STATUS] == 200"
+      - "[BODY] != \"\""
+  - name: CMS
+    group: core
+    url: https://cms.${PROJECT_DOMAIN}/admin
+    interval: 1m
+    conditions:
+      - "[STATUS] == 200"
+      - "[BODY] != \"\""
+  - name: Watcharr
+    group: services
+    url: https://tv.${PROJECT_DOMAIN}
+    interval: 2m
+    conditions:
+      - "[STATUS] == 200"
+      - "[BODY] != \"\""
+  - name: S3 Storage
+    group: services
+    url: https://s3.${PROJECT_DOMAIN}/minio/health/live
+    interval: 2m
+    conditions:
+      - "[STATUS] == 200"
+      - "[BODY] != \"\""
+  - name: Analytics
+    group: services
+    url: https://s.${PROJECT_DOMAIN}/
+    interval: 2m
+    conditions:
+      - "[STATUS] == 200"
+      - "[BODY] != \"\""
+  - name: Admin Login
+    group: services
+    url: https://cms.${PROJECT_DOMAIN}/admin/login
+    interval: 5m
+    conditions:
+      - "[STATUS] == 200"
+      - "[BODY] != \"\""
+  - name: Notes RSS
+    group: feeds
+    url: https://notes.${PROJECT_DOMAIN}/explore/rss.xml
+    interval: 10m
+    conditions:
+      - "[STATUS] == 200"
+      - "[BODY] != \"\""
