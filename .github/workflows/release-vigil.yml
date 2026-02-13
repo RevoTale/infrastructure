@@ -1,0 +1,36 @@
+#
+name: Create and publish a Docker image
+
+# Configures this workflow to run every time a change is pushed to the branch called `release`.
+on:
+  release:
+    types: [published]
+
+# Defines two custom environment variables for the workflow. These are used for the Container registry domain, and a name for the Docker image that this workflow builds.
+env:
+  REGISTRY: ghcr.io
+  IMAGE_NAME: ${{ github.repository }}-vigil
+
+# There is a single job in this workflow. It's configured to run on the latest available version of Ubuntu.
+jobs:
+  build-and-push-image:
+    runs-on: ubuntu-latest
+    # Sets the permissions granted to the `GITHUB_TOKEN` for the actions in this job.
+    permissions:
+      contents: read
+      packages: write
+      attestations: write
+      id-token: write
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v6
+      - name: Build and push Docker image (multi-arch)
+        uses: RevoTale/docker-multi-arch-release-action@v1.1.0
+        with:
+          registry: ${{ env.REGISTRY }}
+          platforms: linux/amd64,linux/arm64
+          username: ${{ github.actor }}
+          image-name: ${{ env.IMAGE_NAME }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+          context: ./vigil
+
