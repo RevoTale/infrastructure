@@ -21,7 +21,7 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v6
       - name: Build and push Docker image (multi-arch)
-        uses: RevoTale/docker-multi-arch-release-action@v1.1.0
+        uses: RevoTale/docker-multi-arch-release-action@v1.2.0
         with:
           registry: ${{ env.REGISTRY }}
           platforms: linux/amd64,linux/arm64
