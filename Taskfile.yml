@@ -1,0 +1,28 @@
+version: "3"
+
+tasks:
+  gen:
+    desc: Generate nginx routes and docs from routes.yml
+    cmds:
+      - go run ./cmd/routesgen
+
+  gen:check:
+    desc: Check generated nginx routes and docs are up to date
+    cmds:
+      - go run ./cmd/routesgen --check
+
+  fix:
+    desc: Format Go sources
+    cmds:
+      - gofmt -w ./cmd ./internal
+
+  validate:
+    desc: Validate generated outputs and run unit tests
+    deps:
+      - task: gen:check
+      - task: test
+
+  test:
+    desc: Run generator unit tests
+    cmds:
+      - go test ./...

@@ -1,0 +1,16 @@
+{{ .GeneratedHeader }}server {
+    listen 443 ssl;
+    http2 on;
+    server_name {{ .ServerName }};
+
+    include /etc/nginx/includes/server-common.conf;
+    include /etc/nginx/includes/ssl-common.conf;
+{{ if .Redirect }}
+
+    return {{ .Redirect.Status }} {{ .Redirect.Target }};
+{{ else }}
+{{ range .LocationBlocks }}
+
+{{ . }}{{ end }}
+{{ end }}
+}

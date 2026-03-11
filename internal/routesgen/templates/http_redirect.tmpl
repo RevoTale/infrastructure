@@ -1,0 +1,6 @@
+{{ .GeneratedHeader }}server {
+    listen 80 default_server;
+    access_log off;
+
+    return 301 https://$host$request_uri;
+}
