@@ -260,6 +260,9 @@ func TestGeneratedTemplatesRenderRegexLocationsForNginx(t *testing.T) {
 	if !strings.Contains(console, "set $upstream archive-service:8082;") {
 		t.Fatalf("expected regex route location to use masked upstream")
 	}
+	if strings.Index(console, "set $upstream archive-service:8082;") > strings.Index(console, "rewrite ^/downloads/(.*)\\.zip$ /archives/$1.zip break;") {
+		t.Fatalf("expected regex route upstream assignment to be emitted before rewrite")
+	}
 
 	landing := outputs["10-landing.conf.template"]
 	if !strings.Contains(landing, "location ~ ^/assets/cache/(thumb|hero)/(.*)$ {") {
@@ -267,6 +270,9 @@ func TestGeneratedTemplatesRenderRegexLocationsForNginx(t *testing.T) {
 	}
 	if !strings.Contains(landing, "rewrite ^/assets/cache/(thumb|hero)/(.*)$ /unsafe/fit-in/$1/plain/http://asset-origin:8081/$2 break;") {
 		t.Fatalf("expected shared rewrite to include masked rewrite target")
+	}
+	if strings.Index(landing, "set $upstream image-proxy:8080;") > strings.Index(landing, "rewrite ^/assets/cache/(thumb|hero)/(.*)$ /unsafe/fit-in/$1/plain/http://asset-origin:8081/$2 break;") {
+		t.Fatalf("expected shared rewrite upstream assignment to be emitted before rewrite")
 	}
 
 	status := outputs["13-status.conf.template"]

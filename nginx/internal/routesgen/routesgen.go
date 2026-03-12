@@ -319,10 +319,10 @@ func renderLocation(location Location) string {
 	for _, includePath := range location.Includes {
 		b.WriteString(fmt.Sprintf("        include %s;\n", includePath))
 	}
+	b.WriteString(fmt.Sprintf("        set $upstream %s;\n", location.Upstream))
 	if location.Rewrite != "" {
 		b.WriteString(fmt.Sprintf("        rewrite %s %s break;\n", location.Match, location.Rewrite))
 	}
-	b.WriteString(fmt.Sprintf("        set $upstream %s;\n", location.Upstream))
 	b.WriteString("        proxy_pass http://$upstream;\n")
 	b.WriteString("    }\n")
 	return b.String()
