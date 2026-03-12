@@ -115,6 +115,26 @@ routes:
 			wantErr: `rewrite is only supported for regex matches`,
 		},
 		{
+			name: "invalid include path",
+			input: `
+version: 1
+http:
+  redirect_to_https: true
+fallback:
+  status: 404
+routes:
+  - id: root
+    host: apex
+    locations:
+      - match_type: prefix
+        match: /
+        includes:
+          - ""
+        upstream: cms:3000
+`,
+			wantErr: `has empty include path`,
+		},
+		{
 			name: "conflicting host match precedence",
 			input: `
 version: 1
@@ -247,6 +267,11 @@ func TestGeneratedTemplatesRenderRegexLocationsForNginx(t *testing.T) {
 	}
 	if !strings.Contains(landing, "rewrite ^/assets/cache/(thumb|hero)/(.*)$ /unsafe/fit-in/$1/plain/http://asset-origin:8081/$2 break;") {
 		t.Fatalf("expected shared rewrite to include masked rewrite target")
+	}
+
+	status := outputs["13-status.conf.template"]
+	if !strings.Contains(status, "include /etc/nginx/includes/proxy-status-api.conf;") {
+		t.Fatalf("expected status template to include location-specific nginx snippets")
 	}
 }
 

@@ -73,10 +73,11 @@ type Redirect struct {
 }
 
 type Location struct {
-	MatchType string `yaml:"match_type"`
-	Match     string `yaml:"match"`
-	Rewrite   string `yaml:"rewrite"`
-	Upstream  string `yaml:"upstream"`
+	MatchType string   `yaml:"match_type"`
+	Match     string   `yaml:"match"`
+	Rewrite   string   `yaml:"rewrite"`
+	Includes  []string `yaml:"includes"`
+	Upstream  string   `yaml:"upstream"`
 }
 
 type headerTemplateData struct {
@@ -315,6 +316,9 @@ func renderLocation(location Location) string {
 	var b strings.Builder
 	b.WriteString(fmt.Sprintf("    %s {\n", renderLocationDirective(location)))
 	b.WriteString("        include /etc/nginx/includes/proxy-common.conf;\n")
+	for _, includePath := range location.Includes {
+		b.WriteString(fmt.Sprintf("        include %s;\n", includePath))
+	}
 	if location.Rewrite != "" {
 		b.WriteString(fmt.Sprintf("        rewrite %s %s break;\n", location.Match, location.Rewrite))
 	}
@@ -400,6 +404,11 @@ func validateLocation(location Location, owner string) error {
 	if location.Rewrite != "" && location.MatchType != "regex" {
 		return fmt.Errorf("%s rewrite is only supported for regex matches", owner)
 	}
+	for _, includePath := range location.Includes {
+		if err := validateIncludePath(includePath, owner); err != nil {
+			return err
+		}
+	}
 
 	if err := validateUpstream(location.Upstream, owner); err != nil {
 		return err
@@ -417,6 +426,16 @@ func validateUpstream(upstream string, owner string) error {
 	}
 	if !strings.Contains(upstream, ":") {
 		return fmt.Errorf("%s upstream %q must include host:port", owner, upstream)
+	}
+	return nil
+}
+
+func validateIncludePath(includePath string, owner string) error {
+	if includePath == "" {
+		return fmt.Errorf("%s has empty include path", owner)
+	}
+	if strings.ContainsAny(includePath, "\t\n") {
+		return fmt.Errorf("%s include path %q must not contain control characters", owner, includePath)
 	}
 	return nil
 }
