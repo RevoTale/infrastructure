@@ -1,0 +1,55 @@
+version: 1
+
+http:
+  redirect_to_https: true
+
+fallback:
+  status: 404
+
+shared_rewrites:
+  - id: asset-cache
+    hosts:
+      - apex
+      - console
+    match_type: regex
+    match: "^/assets/cache/(thumb|hero)/(.*)$"
+    rewrite: "/unsafe/fit-in/$1/plain/http://asset-origin:8081/$2"
+    upstream: "image-proxy:8080"
+
+routes:
+  - id: landing
+    host: apex
+    locations:
+      - match_type: prefix
+        match: /
+        upstream: "public-web:8080"
+
+  - id: app-redirect
+    host: app
+    redirect:
+      to_host: apex
+      status: 302
+
+  - id: console
+    host: console
+    locations:
+      - match_type: exact
+        match: /api
+        upstream: "control-api:9090"
+      - match_type: prefix
+        match: /api/
+        upstream: "control-api:9090"
+      - match_type: regex
+        match: "^/downloads/(.*)\\.zip$"
+        rewrite: "/archives/$1.zip"
+        upstream: "archive-service:8082"
+      - match_type: prefix
+        match: /
+        upstream: "control-web:8080"
+
+  - id: status
+    host: status
+    locations:
+      - match_type: prefix
+        match: /
+        upstream: "status-page:8085"

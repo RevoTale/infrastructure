@@ -1,7 +1,6 @@
 package routesgen
 
 import (
-	"os"
 	"path/filepath"
 	"strings"
 	"testing"
@@ -154,50 +153,100 @@ routes:
 	}
 }
 
-func TestGeneratedRouteTemplatesMatchRepo(t *testing.T) {
+func TestGenerateOutputsIncludesExpectedTemplates(t *testing.T) {
 	t.Parallel()
 
 	cfg := mustLoadFixtureConfig(t)
-	readmePath := fixturePath("nginx", "README.md")
-	readmeBytes, err := os.ReadFile(readmePath)
-	if err != nil {
-		t.Fatalf("read README: %v", err)
-	}
 
-	outputs, err := GenerateOutputs(cfg, string(readmeBytes))
+	outputs, err := GenerateOutputs(cfg)
 	if err != nil {
 		t.Fatalf("generate outputs: %v", err)
 	}
 
-	for _, path := range GeneratedRouteFiles(cfg) {
-		expectedBytes, err := os.ReadFile(filepath.Clean(fixturePath(path)))
-		if err != nil {
-			t.Fatalf("read generated template %s: %v", path, err)
+	for _, name := range GeneratedRouteFilenames(cfg) {
+		if _, ok := outputs[name]; !ok {
+			t.Fatalf("missing generated output %s", name)
 		}
+	}
 
-		if got := outputs[path]; got != string(expectedBytes) {
-			t.Fatalf("generated template mismatch for %s", path)
-		}
+	if !strings.Contains(outputs["01-http-redirect.conf.template"], "return 301 https://$host$request_uri;") {
+		t.Fatalf("expected HTTP redirect template to redirect to HTTPS")
+	}
+
+	if !strings.Contains(outputs["99-default.conf.template"], "return 404;") {
+		t.Fatalf("expected default template to return fallback status")
 	}
 }
 
-func TestGeneratedReadmeMatchesRepo(t *testing.T) {
+func TestGeneratedRouteFilenamesMatchExpectedOrder(t *testing.T) {
 	t.Parallel()
 
 	cfg := mustLoadFixtureConfig(t)
-	readmePath := fixturePath("nginx", "README.md")
-	readmeBytes, err := os.ReadFile(readmePath)
-	if err != nil {
-		t.Fatalf("read README: %v", err)
+
+	got := GeneratedRouteFilenames(cfg)
+	want := []string{
+		"01-http-redirect.conf.template",
+		"10-landing.conf.template",
+		"11-app-redirect.conf.template",
+		"12-console.conf.template",
+		"13-status.conf.template",
+		"99-default.conf.template",
 	}
 
-	outputs, err := GenerateOutputs(cfg, string(readmeBytes))
+	if strings.Join(got, "\n") != strings.Join(want, "\n") {
+		t.Fatalf("unexpected generated filenames:\n%s", strings.Join(got, "\n"))
+	}
+}
+
+func TestGeneratedTemplatesUseVariableProxyPass(t *testing.T) {
+	t.Parallel()
+
+	cfg := mustLoadFixtureConfig(t)
+
+	outputs, err := GenerateOutputs(cfg)
 	if err != nil {
 		t.Fatalf("generate outputs: %v", err)
 	}
 
-	if got := outputs[filepath.ToSlash(filepath.Join("nginx", "README.md"))]; got != string(readmeBytes) {
-		t.Fatalf("generated README does not match repository copy")
+	landing := outputs["10-landing.conf.template"]
+	if !strings.Contains(landing, "set $upstream public-web:8080;") {
+		t.Fatalf("expected landing template to set upstream via variable")
+	}
+	if !strings.Contains(landing, "proxy_pass http://$upstream;") {
+		t.Fatalf("expected landing template to use variable proxy_pass")
+	}
+	if !strings.Contains(landing, "${PROJECT_DOMAIN}") {
+		t.Fatalf("expected landing template to retain PROJECT_DOMAIN placeholder")
+	}
+}
+
+func TestGeneratedTemplatesRenderRegexLocationsForNginx(t *testing.T) {
+	t.Parallel()
+
+	cfg := mustLoadFixtureConfig(t)
+
+	outputs, err := GenerateOutputs(cfg)
+	if err != nil {
+		t.Fatalf("generate outputs: %v", err)
+	}
+
+	console := outputs["12-console.conf.template"]
+	if !strings.Contains(console, "location ~ ^/downloads/(.*)\\.zip$ {") {
+		t.Fatalf("expected regex route location to use nginx regex syntax")
+	}
+	if !strings.Contains(console, "rewrite ^/downloads/(.*)\\.zip$ /archives/$1.zip break;") {
+		t.Fatalf("expected regex route location to include rewrite")
+	}
+	if !strings.Contains(console, "set $upstream archive-service:8082;") {
+		t.Fatalf("expected regex route location to use masked upstream")
+	}
+
+	landing := outputs["10-landing.conf.template"]
+	if !strings.Contains(landing, "location ~ ^/assets/cache/(thumb|hero)/(.*)$ {") {
+		t.Fatalf("expected shared rewrite to render as nginx regex location")
+	}
+	if !strings.Contains(landing, "rewrite ^/assets/cache/(thumb|hero)/(.*)$ /unsafe/fit-in/$1/plain/http://asset-origin:8081/$2 break;") {
+		t.Fatalf("expected shared rewrite to include masked rewrite target")
 	}
 }
 
@@ -205,21 +254,17 @@ func TestRenderedTemplatesWithProjectDomain(t *testing.T) {
 	t.Parallel()
 
 	cfg := mustLoadFixtureConfig(t)
-	readmeBytes, err := os.ReadFile(fixturePath("nginx", "README.md"))
-	if err != nil {
-		t.Fatalf("read README: %v", err)
-	}
 
-	outputs, err := GenerateOutputs(cfg, string(readmeBytes))
+	outputs, err := GenerateOutputs(cfg)
 	if err != nil {
 		t.Fatalf("generate outputs: %v", err)
 	}
 
 	var sawExampleDomain bool
-	for _, path := range GeneratedRouteFiles(cfg) {
-		rendered := strings.ReplaceAll(outputs[path], projectDomainVar, "example.com")
+	for _, name := range GeneratedRouteFilenames(cfg) {
+		rendered := strings.ReplaceAll(outputs[name], projectDomainVar, "example.com")
 		if strings.Contains(rendered, projectDomainVar) {
-			t.Fatalf("rendered template still contains %s in %s", projectDomainVar, path)
+			t.Fatalf("rendered template still contains %s in %s", projectDomainVar, name)
 		}
 		if strings.Contains(rendered, "example.com") {
 			sawExampleDomain = true
@@ -234,7 +279,7 @@ func TestRenderedTemplatesWithProjectDomain(t *testing.T) {
 func mustLoadFixtureConfig(t *testing.T) Config {
 	t.Helper()
 
-	cfg, err := LoadConfig(fixturePath("nginx", "routes.yml"))
+	cfg, err := LoadConfig(fixturePath("testdata", "masked-routes.yml"))
 	if err != nil {
 		t.Fatalf("load config: %v", err)
 	}

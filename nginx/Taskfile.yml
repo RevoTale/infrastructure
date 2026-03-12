@@ -1,0 +1,17 @@
+version: "3"
+
+tasks:
+  fix:
+    desc: Format Go sources
+    cmds:
+      - gofmt -w ./cmd ./internal
+
+  validate:
+    desc: Run Go tests
+    cmds:
+      - go test ./...
+
+  test:
+    desc: Run Go tests
+    cmds:
+      - go test ./...
