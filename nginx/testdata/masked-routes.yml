@@ -51,5 +51,10 @@ routes:
     host: status
     locations:
       - match_type: prefix
+        match: /api/
+        includes:
+          - /etc/nginx/includes/proxy-status-api.conf
+        upstream: "status-page:8085"
+      - match_type: prefix
         match: /
         upstream: "status-page:8085"
