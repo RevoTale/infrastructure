@@ -13,7 +13,7 @@ COPY internal/ ./internal/
 
 RUN CGO_ENABLED=0 GOOS=${TARGETOS:-linux} GOARCH=${TARGETARCH} go build -trimpath -ldflags="-s -w" -o /out/routesgen ./cmd/routesgen
 
-FROM nginx:1.30-alpine
+FROM nginx:1.31-alpine
 
 COPY nginx.conf /etc/nginx/nginx.conf
 COPY includes/ /etc/nginx/includes/
