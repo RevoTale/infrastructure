@@ -23,7 +23,7 @@ jobs:
       id-token: write
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
       - name: Build and push Docker image (multi-arch)
         uses: RevoTale/docker-multi-arch-release-action@v1.4.0
         with:
