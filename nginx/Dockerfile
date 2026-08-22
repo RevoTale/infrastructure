@@ -1,4 +1,4 @@
-FROM --platform=$BUILDPLATFORM golang:1.26-alpine AS routesgen-builder
+FROM --platform=$BUILDPLATFORM golang:1.27-alpine AS routesgen-builder
 
 ARG TARGETOS
 ARG TARGETARCH
