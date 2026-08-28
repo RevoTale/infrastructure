@@ -1,4 +1,4 @@
-FROM ghcr.io/imgproxy/imgproxy:v4.0.13
+FROM ghcr.io/imgproxy/imgproxy:v4.0.14@sha256:595fb82df2364e35711e4303c6de6ad412bbd93963db47be58354a4d52dd1f17
 
 ENV IMGPROXY_ALLOW_LOOPBACK_SOURCE_ADDRESSES=false \
     IMGPROXY_ALLOW_PRIVATE_SOURCE_ADDRESSES=true \
