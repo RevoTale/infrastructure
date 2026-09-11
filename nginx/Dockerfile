@@ -1,4 +1,4 @@
-FROM --platform=$BUILDPLATFORM golang:1.27-alpine AS routesgen-builder
+FROM --platform=$BUILDPLATFORM golang:1.27-alpine@sha256:cf6fca6641884b8433441b2b0652976f975e1d0fdd26d177eaaf8596087f3125 AS routesgen-builder
 
 ARG TARGETOS
 ARG TARGETARCH
@@ -13,7 +13,7 @@ COPY internal/ ./internal/
 
 RUN CGO_ENABLED=0 GOOS=${TARGETOS:-linux} GOARCH=${TARGETARCH} go build -trimpath -ldflags="-s -w" -o /out/routesgen ./cmd/routesgen
 
-FROM nginx:1.31-alpine
+FROM nginx:1.31-alpine@sha256:72ba65eb42c10344912a84ff42408db7d34f2feb642204570ab8fc5ffd29f1d3
 
 COPY nginx.conf /etc/nginx/nginx.conf
 COPY includes/ /etc/nginx/includes/
