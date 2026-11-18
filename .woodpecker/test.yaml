@@ -1,0 +1,8 @@
+when:
+  - event: pull_request
+
+steps:
+  - name: nginx-tests
+    image: ghcr.io/revotale/ci/base:v0.1.8@sha256:c59b01e74acd309c9c775f594917df6d9f8cad93fdfa7f40408aebeb5140f414
+    commands:
+      - task test
