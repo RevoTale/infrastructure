@@ -23,9 +23,9 @@ jobs:
       id-token: write
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v7
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
       - name: Build and push Docker image (multi-arch)
-        uses: RevoTale/docker-multi-arch-release-action@v1.4.0
+        uses: RevoTale/docker-multi-arch-release-action@139a43ddaa10e2a91bbdb8f44d4af4e9bcaa5993 # v1.4.0
         with:
           registry: ${{ env.REGISTRY }}
           platforms: linux/amd64,linux/arm64
